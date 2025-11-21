@@ -1,4 +1,4 @@
-import { providers } from 'ethers';
+import { providers, CallOverrides } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { ReservesHelperInput, UserReservesHelperInput } from '../index';
 import { UiPoolDataProviderV3 } from './typechain/IUiPoolDataProviderV3';
@@ -42,19 +42,34 @@ export interface UiPoolDataProviderContext {
 }
 
 export interface UiPoolDataProviderInterface {
-  getReservesList: (args: ReservesHelperInput) => Promise<string[]>;
-  getReservesData: (args: ReservesHelperInput) => Promise<ReservesData>;
+  getReservesList: (
+    args: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ) => Promise<string[]>;
+  getReservesData: (
+    args: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ) => Promise<ReservesData>;
   getUserReservesData: (
     args: UserReservesHelperInput,
+    overrides?: CallOverrides,
   ) => Promise<UserReserveData>;
-  getEModes: (args: ReservesHelperInput) => Promise<EModeData[]>;
+  getEModes: (
+    args: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ) => Promise<EModeData[]>;
   getEModesHumanized: (
     args: ReservesHelperInput,
+    overrides?: CallOverrides,
   ) => Promise<EmodeDataHumanized[]>;
   getReservesHumanized: (
     args: ReservesHelperInput,
+    overrides?: CallOverrides,
   ) => Promise<ReservesDataHumanized>;
-  getUserReservesHumanized: (args: UserReservesHelperInput) => Promise<{
+  getUserReservesHumanized: (
+    args: UserReservesHelperInput,
+    overrides?: CallOverrides,
+  ) => Promise<{
     userReserves: UserReserveDataHumanized[];
     userEmodeCategoryId: number;
   }>;
@@ -84,36 +99,44 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
   /**
    * Get the underlying asset address for each lending pool reserve
    */
-  public async getReservesList({
-    lendingPoolAddressProvider,
-  }: ReservesHelperInput): Promise<string[]> {
+  public async getReservesList(
+    { lendingPoolAddressProvider }: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<string[]> {
     if (!isAddress(lendingPoolAddressProvider)) {
       throw new Error('Lending pool address is not valid');
     }
 
-    return this._contract.getReservesList(lendingPoolAddressProvider);
+    return this._contract.getReservesList(
+      lendingPoolAddressProvider,
+      overrides,
+    );
   }
 
   /**
    * Get data for each lending pool reserve
    */
-  public async getReservesData({
-    lendingPoolAddressProvider,
-  }: ReservesHelperInput): Promise<ReservesData> {
+  public async getReservesData(
+    { lendingPoolAddressProvider }: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<ReservesData> {
     if (!isAddress(lendingPoolAddressProvider)) {
       throw new Error('Lending pool address is not valid');
     }
 
-    return this._contract.getReservesData(lendingPoolAddressProvider);
+    return this._contract.getReservesData(
+      lendingPoolAddressProvider,
+      overrides,
+    );
   }
 
   /**
    * Get data for each user reserve on the lending pool
    */
-  public async getUserReservesData({
-    lendingPoolAddressProvider,
-    user,
-  }: UserReservesHelperInput): Promise<UserReserveData> {
+  public async getUserReservesData(
+    { lendingPoolAddressProvider, user }: UserReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<UserReserveData> {
     if (!isAddress(lendingPoolAddressProvider)) {
       throw new Error('Lending pool address is not valid');
     }
@@ -122,14 +145,19 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
       throw new Error('User address is not a valid ethereum address');
     }
 
-    return this._contract.getUserReservesData(lendingPoolAddressProvider, user);
+    return this._contract.getUserReservesData(
+      lendingPoolAddressProvider,
+      user,
+      overrides,
+    );
   }
 
-  public async getReservesHumanized({
-    lendingPoolAddressProvider,
-  }: ReservesHelperInput): Promise<ReservesDataHumanized> {
+  public async getReservesHumanized(
+    { lendingPoolAddressProvider }: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<ReservesDataHumanized> {
     const { 0: reservesRaw, 1: poolBaseCurrencyRaw }: ReservesData =
-      await this.getReservesData({ lendingPoolAddressProvider });
+      await this.getReservesData({ lendingPoolAddressProvider }, overrides);
 
     const reservesData: ReserveDataHumanized[] = reservesRaw.map(
       (reserveRaw, index) => {
@@ -211,15 +239,18 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
     };
   }
 
-  public async getUserReservesHumanized({
-    lendingPoolAddressProvider,
-    user,
-  }: UserReservesHelperInput): Promise<{
+  public async getUserReservesHumanized(
+    { lendingPoolAddressProvider, user }: UserReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<{
     userReserves: UserReserveDataHumanized[];
     userEmodeCategoryId: number;
   }> {
     const { 0: userReservesRaw, 1: userEmodeCategoryId }: UserReserveData =
-      await this.getUserReservesData({ lendingPoolAddressProvider, user });
+      await this.getUserReservesData(
+        { lendingPoolAddressProvider, user },
+        overrides,
+      );
 
     return {
       userReserves: userReservesRaw.map(userReserveRaw => ({
@@ -234,24 +265,29 @@ export class UiPoolDataProvider implements UiPoolDataProviderInterface {
     };
   }
 
-  public async getEModes({
-    lendingPoolAddressProvider,
-  }: ReservesHelperInput): Promise<EModeData[]> {
+  public async getEModes(
+    { lendingPoolAddressProvider }: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<EModeData[]> {
     if (!isAddress(lendingPoolAddressProvider)) {
       throw new Error('Lending pool address is not valid');
     }
 
-    return this._contract.getEModes(lendingPoolAddressProvider);
+    return this._contract.getEModes(lendingPoolAddressProvider, overrides);
   }
 
-  public async getEModesHumanized({
-    lendingPoolAddressProvider,
-  }: ReservesHelperInput): Promise<EmodeDataHumanized[]> {
+  public async getEModesHumanized(
+    { lendingPoolAddressProvider }: ReservesHelperInput,
+    overrides?: CallOverrides,
+  ): Promise<EmodeDataHumanized[]> {
     if (!isAddress(lendingPoolAddressProvider)) {
       throw new Error('Lending pool address is not valid');
     }
 
-    const eModeData = await this.getEModes({ lendingPoolAddressProvider });
+    const eModeData = await this.getEModes(
+      { lendingPoolAddressProvider },
+      overrides,
+    );
 
     return eModeData.map(eMode => ({
       id: eMode.id,
